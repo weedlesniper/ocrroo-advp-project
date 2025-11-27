@@ -16,9 +16,14 @@ from pathlib import Path
 import cv2, os
 import numpy as np
 from PIL import Image
+import platform
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
+system = platform.system()
+if system == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+elif system == "Linux":
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
 VID_PATH = Path("resources/oop.mp4")
 
