@@ -4,7 +4,10 @@ from fastapi import HTTPException
 from unittest.mock import patch
 
 import preliminary.simple_api
-from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, video, video_frame, video_frame_ocr, VIDEOS
+from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, video, video_frame, \
+    video_frame_ocr, video_file, VIDEOS
+
+from starlette.responses import FileResponse
 
 
 class TestVideoPlayback(unittest.TestCase):
@@ -82,6 +85,7 @@ class TestVideoFunction(unittest.TestCase):
         self.assertIn("self", result._links)
         self.assertIn("frames", result._links)
 
+
 class TestVideoFrame(unittest.TestCase):
     def test_video_frame_returns_bytes(self):
         fake_path = Path("/fake/test/video_path.mp4")
@@ -95,14 +99,14 @@ class TestVideoFrame(unittest.TestCase):
                     @staticmethod
                     def release():
                         pass
+
                 self.capture = Capture()
 
             def get_image_as_bytes(self, t):
                 return b"fake_image_bytes"
 
         with patch("preliminary.simple_api.CodingVideo", MockCodingVideo), \
-             patch("preliminary.simple_api.Path.is_file", return_value=True):
-
+                patch("preliminary.simple_api.Path.is_file", return_value=True):
             result = video_frame("fake_video", 1.0)
 
         self.assertEqual(result.body, b"fake_image_bytes")
@@ -124,14 +128,14 @@ class TestVideoFrameOCR(unittest.TestCase):
                     @staticmethod
                     def release():
                         pass
+
                 self.capture = Capture()
 
             def get_text_from_frame_at_time(self, t):
                 return "test text for OCR"
 
         with patch("preliminary.simple_api.CodingVideo", MockCodingVideo), \
-             patch("preliminary.simple_api.Path.is_file", return_value=True):
-
+                patch("preliminary.simple_api.Path.is_file", return_value=True):
             result = video_frame_ocr("fake_video", 1)
 
         self.assertIsInstance(result, dict)
@@ -139,6 +143,23 @@ class TestVideoFrameOCR(unittest.TestCase):
         self.assertEqual(result["text"], "test text for OCR")
 
         del VIDEOS["fake_video"]
+
+
+class TestVideoFile(unittest.TestCase):
+    def test_video_file_response(self):
+        fake_path = Path("/fake/test/video_path.mp4")
+        VIDEOS["fake_video"] = fake_path
+
+        with patch("preliminary.simple_api.Path.is_file", return_value=True):
+            result = video_file("fake_video")
+
+        self.assertIsInstance(result, FileResponse)
+        self.assertEqual(result.path, fake_path)
+        self.assertEqual(result.media_type, "video/mp4")
+
+        del VIDEOS["fake_video"]
+
+
 
 
 if __name__ == '__main__':
