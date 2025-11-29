@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from unittest.mock import patch
 
 import preliminary.simple_api
-from preliminary.simple_api import _open_vid_or_404,list_videos, VIDEOS
+from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, VIDEOS
 
 
 class TestVideoPlayback(unittest.TestCase):
@@ -12,12 +12,13 @@ class TestVideoPlayback(unittest.TestCase):
         mock_path = Path("/this/is/my/fake/path.mp4")
         VIDEOS["missing_file"] = mock_path
 
-        with patch.object(Path,"is_file", return_value=False):
+        with patch.object(Path, "is_file", return_value=False):
             with self.assertRaises(HTTPException) as response:
                 _open_vid_or_404("missing_file")
 
-        self.assertEqual(response.exception.status_code,404)
-        self.assertEqual(response.exception.detail,"Video not found")
+        self.assertEqual(response.exception.status_code, 404)
+        self.assertEqual(response.exception.detail, "Video not found")
+
 
 class TestListVideos(unittest.TestCase):
     def test_list_videos_structure(self):
@@ -31,20 +32,25 @@ class TestListVideos(unittest.TestCase):
             self.assertEqual(len(response["videos"]), 2)
 
             first = response["videos"][0]
-            self.assertIn("id",first)
+            self.assertIn("id", first)
             self.assertIn("path", first)
             self.assertIn("description", first)
-            self.assertIn("_links",first)
+            self.assertIn("_links", first)
 
+class TestMeta(unittest.TestCase):
+    def test_meta_returns_metadata(self):
+        class ExampleVideo:
+            fps = 30
+            frame_count = 400
+            duration = 20.0
 
+        video = ExampleVideo()
+        meta = _meta(video)
 
-
-
-
-
-
-
+        self.assertIsInstance(meta, VideoMetaData)
+        self.assertEqual(meta.fps,30)
+        self.assertEqual(meta.frame_count, 400)
+        self.assertEqual(meta.duration_seconds,20.0)
 
 if __name__ == '__main__':
     unittest.main()
-
