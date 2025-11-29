@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from unittest.mock import patch
 
 import preliminary.simple_api
-from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, video, VIDEOS
+from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, video, video_frame, VIDEOS
 
 
 class TestVideoPlayback(unittest.TestCase):
@@ -81,6 +81,36 @@ class TestVideoFunction(unittest.TestCase):
         self.assertEqual(result.duration_seconds, 30.0)
         self.assertIn("self", result._links)
         self.assertIn("frames", result._links)
+
+class TestVideoFrame(unittest.TestCase):
+    def test_video_frame_returns_bytes(self):
+        fake_path = Path("/fake/test/video_path.mp4")
+        VIDEOS["fake_video"] = fake_path
+
+        class MockCodingVideo:
+            def __init__(self, path):
+                self.path = path
+
+                class Capture:
+                    @staticmethod
+                    def release():
+                        pass
+                self.capture = Capture()
+
+            def get_image_as_bytes(self, t):
+                return b"fake_image_bytes"
+
+        with patch("preliminary.simple_api.CodingVideo", MockCodingVideo), \
+             patch("preliminary.simple_api.Path.is_file", return_value=True):
+
+            result = video_frame("fake_video", 1.0)
+
+        self.assertEqual(result.body, b"fake_image_bytes")
+        self.assertEqual(result.media_type, "image/png")
+
+        del VIDEOS["fake_video"]
+
+
 
 
 
