@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from unittest.mock import patch
 
 import preliminary.simple_api
-from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, VIDEOS
+from preliminary.simple_api import _open_vid_or_404, list_videos, _meta, VideoMetaData, video, VIDEOS
 
 
 class TestVideoPlayback(unittest.TestCase):
@@ -37,6 +37,7 @@ class TestListVideos(unittest.TestCase):
             self.assertIn("description", first)
             self.assertIn("_links", first)
 
+
 class TestMeta(unittest.TestCase):
     def test_meta_returns_metadata(self):
         class ExampleVideo:
@@ -48,9 +49,40 @@ class TestMeta(unittest.TestCase):
         meta = _meta(video)
 
         self.assertIsInstance(meta, VideoMetaData)
-        self.assertEqual(meta.fps,30)
+        self.assertEqual(meta.fps, 30)
         self.assertEqual(meta.frame_count, 400)
-        self.assertEqual(meta.duration_seconds,20.0)
+        self.assertEqual(meta.duration_seconds, 20.0)
+
+
+class TestVideoFunction(unittest.TestCase):
+    def test_video_returns_metadata(self):
+        test_path = Path("/this/is/a/test/video_path.mp4")
+        VIDEOS["test_video"] = test_path
+
+        class MockCodingVideo:
+            fps = 30
+            frame_count = 400
+            duration = 30.0
+
+            def __init__(self, path):
+                self.path = path
+
+            class capture:
+                @staticmethod
+                def release():
+                    pass
+
+        with patch("preliminary.simple_api.CodingVideo", MockCodingVideo), \
+                patch("preliminary.simple_api.Path.is_file", return_value=True):
+            result = video("test_video")
+
+        self.assertEqual(result.fps, 30)
+        self.assertEqual(result.frame_count, 400)
+        self.assertEqual(result.duration_seconds, 30.0)
+        self.assertIn("self", result._links)
+        self.assertIn("frames", result._links)
+
+
 
 if __name__ == '__main__':
     unittest.main()
