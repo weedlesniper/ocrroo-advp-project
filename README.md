@@ -24,7 +24,7 @@ It can be downloaded at https://nodejs.org/en/download
 ### Windows users - Important Notice:
 Before completing the backend installation, make sure you are using Python 3.13.x.
 Using Python 3.11 or Python 3.14 can cause uv sync to fail due to numpy build issues on Windows.
-You can find some more details in the .python-version file inside the backend folder.
+You can find some more details in the windows_uv_sync_fix.md file inside the backend folder.
 
 ## Installation Backend
 
@@ -134,5 +134,6 @@ To do so
 5) The folder path should look like .\ocrroo-advp-project\backend\.venv\Scripts\python.exe. If so, click ok, and try running the tests.
 
 <!-- TODO: Add steps for other IDES such as VSCode-->
+
 
 
